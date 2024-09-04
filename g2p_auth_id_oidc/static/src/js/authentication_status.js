@@ -6,9 +6,6 @@ import {registry} from "@web/core/registry";
 
 export class RegIdAuthStatus extends Component {
     setup() {
-        // TODO: get these fields from options from view
-        this.statusClass = "";
-        this.buttonClass = "";
         this.showWidget = Boolean(this.props.record.data.auth_oauth_provider_id);
         this.statusSelectionObject = Object.fromEntries(
             this.props.record.fields.authentication_status.selection

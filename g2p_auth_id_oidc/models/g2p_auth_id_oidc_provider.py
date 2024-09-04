@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime
 
 from odoo import fields, models
 
@@ -59,7 +60,17 @@ class G2PAuthIDOidcProvider(models.Model):
                     if oauth_partner:
                         for reg_id in oauth_partner.reg_ids:
                             if reg_id.id_type.id == id_type_id:
-                                reg_id.value = value
+                                reg_ids.append(
+                                    (
+                                        1,
+                                        reg_id.id,
+                                        {
+                                            "value": value,
+                                            "authentication_status": "authenticated",
+                                            "last_authentication_time": datetime.now(),
+                                        },
+                                    )
+                                )
                                 append = False
                                 break
                     if append:

@@ -8,12 +8,13 @@
         <field name="arch" type="xml">
             <xpath expr="//field[@name='reg_ids']/tree" position="inside">
                 <field name="auth_oauth_provider_id" column_invisible="1" />
+                <field name="last_authentication_time" readonly="1" />
+                <field name="last_authentication_user_id" readonly="1" />
                 <field
                     name="authentication_status"
                     string=""
                     widget="g2p_auth_id_oidc.reg_id_auth_status"
                     readonly="1"
-                    options="{'statusClass': '', 'buttonClass': ''}"
                 />
             </xpath>
         </field>

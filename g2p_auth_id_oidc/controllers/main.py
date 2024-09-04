@@ -1,7 +1,6 @@
 import json
 import logging
 import traceback
-from datetime import datetime
 
 from werkzeug.exceptions import BadRequest
 
@@ -19,7 +18,6 @@ class RegIdOidcController(http.Controller):
     @fragment_to_query_string
     def g2p_reg_id_authenticate(self, **kw):
         state = json.loads(kw["state"])
-
         dbname = state["d"]
         if not http.db_filter([dbname]):
             return BadRequest("DB cannot be empty")
@@ -31,7 +29,6 @@ class RegIdOidcController(http.Controller):
             "authentication_status": False,
             "error_exception": None,
         }
-
         try:
             oauth_provider = request.env["auth.oauth.provider"].sudo().browse(provider)
             reg_id = request.env["g2p.reg.id"].browse(reg_id_id)
@@ -41,15 +38,23 @@ class RegIdOidcController(http.Controller):
                 raise BadRequest("Oauth2 Provider not supported!")
 
             oauth_provider.oidc_get_tokens(kw)
-            reg_id.authentication_status = "authenticated"
-            reg_id.last_authentication_time = datetime.now()
-            reg_id.last_authentication_user_id = request.env.user.id
             validation = oauth_provider.oidc_get_validation_dict(kw)
             oauth_provider.oidc_signin_generate_user_values(
                 validation, kw, oauth_partner=reg_id.partner_id, oauth_user=None, create_user=False
             )
-            response_values["authentication_status"] = True
-            response_values["validation"] = validation
+            if validation["user_id"] and reg_id.value == validation["user_id"]:
+                reg_id.partner_id.update({"reg_ids": validation["reg_ids"]})
+                response_values["authentication_status"] = True
+                reg_id.last_authentication_user_id = request.env.user.id
+                reg_id.description = None
+                response_values["validation"] = validation
+            else:
+                reg_id.update(
+                    {
+                        "authentication_status": "not_authenticated",
+                        "description": "ID value does not match",
+                    }
+                )
         except Exception:
             _logger.exception("Encountered error while authenticating Reg Id.")
             response_values["error_exception"] = traceback.format_exc()
